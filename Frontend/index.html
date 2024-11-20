@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Captioning & Translation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f2f4f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2C3E50;
+            font-size: 36px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        label {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        input[type="file"], select, button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 12px 0;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            transition: border 0.3s ease;
+        }
+
+        input[type="file"]:hover, select:hover, button:hover {
+            border-color: #3498db;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .output-container {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #ecf0f1;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .output-container h2 {
+            font-size: 24px;
+            color: #2980b9;
+            margin-bottom: 10px;
+        }
+
+        .output-container p {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .audio-container {
+            margin-top: 20px;
+        }
+
+        .audio-container audio {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-message, .success-message {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .error-message {
+            color: #e74c3c;
+        }
+
+        .success-message {
+            color: #2ecc71;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            button {
+                font-size: 18px;
+            }
+
+            .output-container h2 {
+                font-size: 20px;
+            }
+
+            .audio-container audio {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Image Captioning & Translation</h1>
+    
+    <!-- Image Upload Form -->
+    <form id="image-upload-form">
+        <label for="image-upload">Upload an Image:</label>
+        <input type="file" id="image-upload" name="image" accept="image/*" required>
+        
+        <label for="language">Choose Language for Translation:</label>
+        <select id="language" name="language" required>
+            <option value="Hindi">Hindi</option>
+            <option value="Telugu">Telugu</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Gujarati">Gujarati</option>
+            <option value="Kannada">Kannada</option>
+            <option value="Malayalam">Malayalam</option>
+            <option value="Marathi">Marathi</option>
+            <option value="Punjabi">Punjabi</option>
+            <option value="Urdu">Urdu</option>
+        </select>
+        
+        <button type="submit">Process Image</button>
+    </form>
+
+    <!-- Output Container -->
+    <div id="output" class="output-container" style="display: none;">
+        <h2>Generated Caption</h2>
+        <p><strong>Caption:</strong> <span id="caption"></span></p>
+        <p><strong>Translated Caption:</strong> <span id="translated-caption"></span></p>
+
+        <div class="audio-container">
+            <h3>Listen to Audio:</h3>
+            <audio id="audio-player" controls>
+                <source id="audio-source" src="" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" class="error-message" style="display: none;"></div>
+</div>
+
+<script>
+    document.getElementById('image-upload-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        const fileInput = document.getElementById('image-upload');
+        const languageInput = document.getElementById('language');
+        const errorMessageDiv = document.getElementById('error-message');
+        const outputDiv = document.getElementById('output');
+
+        if (!fileInput.files.length) {
+            errorMessageDiv.textContent = 'Please upload an image.';
+            errorMessageDiv.style.display = 'block';
+            return;
+        }
+
+        // Clear previous output
+        document.getElementById('caption').textContent = '';
+        document.getElementById('translated-caption').textContent = '';
+        document.getElementById('audio-source').src = '';
+        document.getElementById('audio-player').load();
+        errorMessageDiv.style.display = 'none';
+        outputDiv.style.display = 'none';
+
+        formData.append('image', fileInput.files[0]);
+        formData.append('language', languageInput.value);
+
+        fetch('/process', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                errorMessageDiv.textContent = data.error;
+                errorMessageDiv.style.display = 'block';
+            } else {
+                // Display the generated and translated caption
+                document.getElementById('caption').textContent = data.caption;
+                document.getElementById('translated-caption').textContent = data.translated_caption;
+
+                // Set the audio source
+                document.getElementById('audio-source').src = data.audio_url;
+                document.getElementById('audio-player').load();
+
+                // Show the output section
+                outputDiv.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            errorMessageDiv.textContent = 'An error occurred while processing the image.';
+            errorMessageDiv.style.display = 'block';
+            console.error('Error:', error);
+        });
+    });
+</script>
+
+</body>
+</html>
